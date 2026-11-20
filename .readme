@@ -1,0 +1,82 @@
+from pathlib import Path
+import re
+
+source = Path("/mnt/data/index.html")
+if not source.exists():
+    source = Path("/mnt/data/index_updated.html")
+
+html = source.read_text(encoding="utf-8")
+
+# Typography and subtitle
+html = html.replace(
+    'h1 { margin:0; font-size:23px; letter-spacing:1.5px; font-weight:650; }',
+    'h1 { margin:0; font-size:23px; letter-spacing:1.1px; font-weight:700; font-family:Arial, Helvetica, sans-serif; }'
+)
+html = html.replace(
+    '.subtitle { margin:9px 0 28px; color:var(--muted); font-size:13px; letter-spacing:.4px; }',
+    '.subtitle { margin:9px 0 8px; color:var(--muted); font-size:13px; letter-spacing:.4px; }\n    .role { margin:0 0 28px; color:#555; font-size:11px; font-weight:500; letter-spacing:.15px; }'
+)
+html = html.replace(
+    '<p class="subtitle">DIGITAL BUSINESS CARD</p>',
+    '<p class="subtitle">DIGITAL BUSINESS CARD</p>\n    <p class="role">Sales &amp; Business Development Consultant</p>'
+)
+
+# Remove any old payment row/footer before rebuilding them
+html = re.sub(r'\s*<div class="payments" aria-label="Payment methods">.*?</div>\s*',
+              '\n', html, flags=re.S)
+html = html.replace('    <div class="footer">MOHAMED EL NAGGAR</div>\n', '')
+
+# Add compact icon-only payment links directly after Instagram
+payment_block = """
+    <div class="payments" aria-label="Payment methods">
+      <a class="payment-link" href="instapay://pay?ipa=mohamedlnaggar%40instapay"
+         aria-label="Open InstaPay" title="InstaPay">
+        <svg viewBox="0 0 160 70" role="img" aria-label="InstaPay">
+          <rect x="2" y="2" width="156" height="66" rx="14" fill="#fff"/>
+          <path d="M22 18h13v34H22z" fill="#6D2C91"/>
+          <path d="M40 18h13v34H40z" fill="#F5A623"/>
+          <path d="M58 18h13v34H58z" fill="#6D2C91"/>
+          <text x="78" y="32" font-family="Arial,sans-serif" font-size="18" font-weight="700" fill="#30303A">Insta</text>
+          <text x="78" y="50" font-family="Arial,sans-serif" font-size="18" font-weight="700" fill="#6D2C91">Pay</text>
+        </svg>
+      </a>
+      <a class="payment-link" href="tel:*9*7%23"
+         aria-label="Open Vodafone Cash transfer menu" title="Vodafone Cash">
+        <svg viewBox="0 0 180 70" role="img" aria-label="Vodafone Cash">
+          <rect x="2" y="2" width="176" height="66" rx="14" fill="#fff"/>
+          <circle cx="34" cy="35" r="22" fill="#E60000"/>
+          <path d="M27 20c7-4 17 0 19 8-7-3-13-1-15 5-2 5 1 10 6 13-10 1-19-7-18-17 1-4 4-7 8-9z" fill="#fff"/>
+          <text x="65" y="31" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#E60000">vodafone</text>
+          <text x="65" y="49" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#333">cash</text>
+        </svg>
+      </a>
+    </div>
+"""
+html = html.replace(
+    '    </div>\n\n    <button class="save" onclick="saveContact()">＋ Save Contact</button>',
+    '    </div>\n' + payment_block + '\n    <button class="save" onclick="saveContact()">＋ Save Contact</button>',
+    1
+)
+
+if '.payments {' not in html:
+    html = html.replace(
+        '    .save {',
+        """    .payments {
+      display:flex; align-items:center; justify-content:center; gap:22px;
+      margin-top:18px; padding-top:16px; border-top:1px solid var(--line);
+    }
+    .payment-link {
+      width:62px; height:52px; display:grid; place-items:center;
+      border-radius:12px; text-decoration:none; transition:.18s ease;
+    }
+    .payment-link:hover { transform:translateY(-2px); }
+    .payment-link svg { width:54px; height:42px; display:block; }
+    .save {"""
+    )
+
+# Make sure the name style is robust and remove unused footer styling
+html = html.replace('    .footer { margin-top:23px; color:#aaa; font-size:11px; letter-spacing:1.3px; }\n', '')
+
+output = Path("/mnt/data/index_final.html")
+output.write_text(html, encoding="utf-8")
+print(f"تم إنشاء الملف بنجاح: {output.name}")
